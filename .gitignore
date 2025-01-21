@@ -1,1 +1,17 @@
+# Ignorer les fichiers de configuration de l'éditeur
+.vscode/
+.idea/
+.vs/
+
+# Ignorer les fichiers de cache et de compilation
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.tox/
+.coverage
+.DS_Store
+
+# Ignorer les environnements virtuels
 *.venv
+*.egg-info
