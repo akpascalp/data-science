@@ -7,75 +7,81 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.express as px
 
-url = "https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-DV0101EN-SkillsNetwork/Data%20Files/historical_automobile_sales.csv"
-response = requests.get(url, verify=True)
-data = pd.read_csv(StringIO(response.text))
-app = dash.Dash(__name__)
-app.title = "Automobile Statistics Dashboard"
-
-YEAR_LIST = [i for i in range(1980, 2024, 1)]
-
 # Constants
 URL = "https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-DV0101EN-SkillsNetwork/Data%20Files/historical_automobile_sales.csv"
 YEAR_LIST = [i for i in range(1980, 2024, 1)]
+
 
 # Fetch data
 def fetch_data(url):
     response = requests.get(url, verify=True)
     return pd.read_csv(StringIO(response.text))
 
+
 data = fetch_data(URL)
 
-app.layout = html.Div(
-    [
-        html.H1(
-            "Automobile Sales Statistics Dashboard",
-            style={"textAlign": "center", "color": "#503D36", "font-size": 24},
-        ),
-        html.Div(
-            [
-                html.Label("Select Statistics:"),
+# Initialize Dash app
+app = dash.Dash(__name__)
+app.title = "Automobile Statistics Dashboard"
+
+
+def create_layout():
+    return html.Div(
+        [
+            html.H1(
+                "Automobile Sales Statistics Dashboard",
+                style={"textAlign": "center", "color": "#503D36", "font-size": 24},
+            ),
+            html.Div(
+                [
+                    html.Label("Select Statistics:"),
+                    dcc.Dropdown(
+                        id="dropdown-statistics",
+                        options=[
+                            {
+                                "label": "Yearly Statistics",
+                                "value": "Yearly Statistics",
+                            },
+                            {
+                                "label": "Recession Period Statistics",
+                                "value": "Recession Period Statistics",
+                            },
+                        ],
+                        value="Select Statistics",
+                        placeholder="Select a report type",
+                    ),
+                ]
+            ),
+            html.Div(
                 dcc.Dropdown(
-                    id="dropdown-statistics",
-                    options=[
-                        {"label": "Yearly Statistics", "value": "Yearly Statistics"},
-                        {
-                            "label": "Recession Period Statistics",
-                            "value": "Recession Period Statistics",
-                        },
-                    ],
-                    value="Select Statistics",
-                    placeholder="Select a report type",
-                ),
-            ]
-        ),
-        html.Div(
-            dcc.Dropdown(
-                id="select-year",
-                options=[{"label": i, "value": i} for i in YEAR_LIST],
-                value="Select-year",
-                placeholder="Select-year",
-            )
-        ),
-        html.Div(
-            [
-                html.Div(
-                    id="output-container",
-                    className="chart-grid",
-                    style={"display": "flex"},
-                ),
-            ]
-        ),
-    ]
-)
+                    id="select-year",
+                    options=[{"label": i, "value": i} for i in YEAR_LIST],
+                    value="Select-year",
+                    placeholder="Select-year",
+                )
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        id="output-container",
+                        className="chart-grid",
+                        style={"display": "flex"},
+                    ),
+                ]
+            ),
+        ]
+    )
 
+app.layout = create_layout()
 
+# Callbacks
 @app.callback(
     Output(component_id="select-year", component_property="disabled"),
     Input(component_id="dropdown-statistics", component_property="value"),
 )
 def update_input_container(selected_statistics):
     return selected_statistics != "Yearly Statistics"
+
 
 @app.callback(
     Output(component_id="output-container", component_property="children"),
@@ -91,7 +97,7 @@ def update_output_container(selected_statistics, input_year):
         yearly_rec = (
             recession_data.groupby("Year")["Automobile_Sales"].mean().reset_index()
         )
-        R_chart1 = dcc.Graph(
+        r_chart1 = dcc.Graph(
             figure=px.line(
                 yearly_rec,
                 x="Year",
@@ -104,7 +110,7 @@ def update_output_container(selected_statistics, input_year):
             .mean()
             .reset_index()
         )
-        R_chart2 = dcc.Graph(
+        r_chart2 = dcc.Graph(
             figure=px.bar(
                 average_sales,
                 x="Vehicle_Type",
@@ -117,7 +123,7 @@ def update_output_container(selected_statistics, input_year):
             .sum()
             .reset_index()
         )
-        R_chart3 = dcc.Graph(
+        r_chart3 = dcc.Graph(
             figure=px.pie(
                 exp_rec,
                 values="Advertising_Expenditure",
@@ -134,7 +140,7 @@ def update_output_container(selected_statistics, input_year):
             .reset_index()
         )
 
-        R_chart4 = dcc.Graph(
+        r_chart4 = dcc.Graph(
             figure=px.bar(
                 unemp_data,
                 x="unemployment_rate",
@@ -150,12 +156,12 @@ def update_output_container(selected_statistics, input_year):
         return [
             html.Div(
                 className="chart-item",
-                children=[html.Div(children=R_chart1), html.Div(children=R_chart2)],
+                children=[html.Div(children=r_chart1), html.Div(children=r_chart2)],
                 style={"display": "flex", "flex-wrap": "wrap"},
             ),
             html.Div(
                 className="chart-item",
-                children=[html.Div(children=R_chart3), html.Div(children=R_chart4)],
+                children=[html.Div(children=r_chart3), html.Div(children=r_chart4)],
                 style={"display": "flex", "flex-wrap": "wrap"},
             ),
         ]
@@ -164,14 +170,14 @@ def update_output_container(selected_statistics, input_year):
         yearly_data = data[data["Year"] == input_year]
 
         yas = data.groupby("Year")["Automobile_Sales"].mean().reset_index()
-        Y_chart1 = dcc.Graph(
+        y_chart4 = dcc.Graph(
             figure=px.line(
                 yas, x="Year", y="Automobile_Sales", title="Yearly Automobile Sales"
             )
         )
 
         mas = data.groupby("Month")["Automobile_Sales"].mean().reset_index()
-        Y_chart2 = dcc.Graph(
+        y_chart2 = dcc.Graph(
             figure=px.line(
                 mas,
                 x="Month",
@@ -181,7 +187,7 @@ def update_output_container(selected_statistics, input_year):
         )
 
         avr_vdata = yearly_data.groupby("Year")["Automobile_Sales"].mean().reset_index()
-        Y_chart3 = dcc.Graph(
+        y_chart3 = dcc.Graph(
             figure=px.bar(
                 avr_vdata,
                 x="Year",
@@ -197,7 +203,7 @@ def update_output_container(selected_statistics, input_year):
             .sum()
             .reset_index()
         )
-        Y_chart4 = dcc.Graph(
+        y_chart4 = dcc.Graph(
             figure=px.pie(
                 exp_data,
                 values="Advertising_Expenditure",
@@ -209,12 +215,12 @@ def update_output_container(selected_statistics, input_year):
         return [
             html.Div(
                 className="chart-item",
-                children=[html.Div(children=Y_chart1), html.Div(children=Y_chart2)],
+                children=[html.Div(children=y_chart4), html.Div(children=y_chart2)],
                 style={"display": "flex", "flex-wrap": "wrap"},
             ),
             html.Div(
                 className="chart-item",
-                children=[html.Div(children=Y_chart3), html.Div(children=Y_chart4)],
+                children=[html.Div(children=y_chart3), html.Div(children=y_chart4)],
                 style={"display": "flex", "flex-wrap": "wrap"},
             ),
         ]
